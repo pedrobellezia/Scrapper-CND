@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Logs
+logs/*
+*.log
+
+# VSCode/PyCharm
+.vscode/
+.idea/
+
+# Arquivos temporários
+*.swp
+*.bak
+*.tmp
+
+# Docker
+*.pid
+
+# Outros
+.DS_Store
+
+# Ignorar arquivos PDF gerados
+/static/pdf/*
+/static/error/*
