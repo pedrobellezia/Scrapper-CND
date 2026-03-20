@@ -24,6 +24,8 @@ class CaptchaSolver:
             raise ValueError(f"sitekey not found in iframe src: {src!r}")
         return keys[0]
 
+
+
     @staticmethod
     async def solve(
         api_key: str, page: Page, img_xpath: str = None, input_xpath: str = None

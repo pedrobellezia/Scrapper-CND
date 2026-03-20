@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 from playwright.async_api import (
     Page,
@@ -169,3 +170,81 @@ class Estadual:
             raise_timeout("Estadual SC", cnpj, page, e)
         except Exception as e:
             raise_unexpected("Estadual SC", cnpj, page, e)
+
+    @staticmethod
+    async def pr(page: Page, context: BrowserContext, cnpj: str):
+        try:
+            logger.info(f"Starting Estadual PR scrape for CNPJ: {cnpj}")
+
+            await page.goto(
+                "https://cdwfazenda.paas.pr.gov.br/cdwportal/certidao/automatica",
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+
+            await page.locator('//input[@aria-label="CPF ou CNPJ do requerente"]').fill(
+                cnpj
+            )
+
+            await page.locator('//*[@id="app"]/div/div[3]/main/form/div/button').click()
+
+            await page.locator(
+                '//*[@id="q-portal--dialog--1"]/div/div[2]/div/div[3]/button[2]'
+            ).click()
+
+            await asyncio.sleep(4)
+            async with page.expect_download(timeout=30_000) as dl:
+                await page.locator(
+                    '//button[.//span//span[normalize-space()="Baixar PDF"]]'
+                ).click()
+            # se lembra de fazer o pdf
+            download = await dl.value
+            download_path = await download.path()
+            if not download_path:
+                raise ScrapError(f"Falha ao obter PDF Estadual PR para {cnpj}")
+
+            pdf_bytes = Path(download_path).read_bytes()
+
+            logger.info(f"Estadual PR scrape completed for CNPJ: {cnpj}")
+            return pdf_bytes
+
+        except (ScrapError, WrongParams):
+            raise
+        except PlaywrightTimeout as e:
+            raise_timeout("Estadual PR", cnpj, page, e)
+        except Exception as e:
+            raise_unexpected("Estadual PR", cnpj, page, e)
+
+    @staticmethod
+    async def es(page: Page, context: BrowserContext, cnpj: str):
+        try:
+            logger.info(f"Starting Estadual PR scrape for CNPJ: {cnpj}")
+
+            await page.goto(
+                "https://s2-internet.sefaz.es.gov.br/certidao/cnd",
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+
+            await page.locator('//li[@title="Certidão Negativa de Débito"]').click()
+
+            await asyncio.sleep(5)
+
+            await page.locator('//*[@id="numIdentificacao"]').fill(cnpj)
+            await page.locator('//*[@id="btn-emitir-certidao"]').click()
+            await asyncio.sleep(50)
+            data = await page.locator('//*[@id="divCertidao"]/object').get_attribute(
+                "data"
+            )
+            raw = data.split(", ")[1]
+            pdf_bytes = base64.b64decode(raw)
+
+            logger.info(f"Estadual PR scrape completed for CNPJ: {cnpj}")
+            return pdf_bytes
+
+        except (ScrapError, WrongParams):
+            raise
+        except PlaywrightTimeout as e:
+            raise_timeout("Estadual PR", cnpj, page, e)
+        except Exception as e:
+            raise_unexpected("Estadual PR", cnpj, page, e)
