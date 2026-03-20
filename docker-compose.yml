@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - CAPTCHA_API_KEY=${CAPTCHA_API_KEY}
+      - HOST=${HOST}
+      - PORT=${PORT}
+      - RELOAD=${RELOAD}
+      - HEADLESS=${HEADLESS}
+    volumes:
+      - ./app:/app/app
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: xvfb-run -a --server-args="-screen 0 1920x1080x24" python -m app.app
