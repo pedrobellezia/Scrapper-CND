@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends
-from fastapi.params import Body
+from fastapi.responses import Response
 
 from app.utils.dependencies import get_tools
 from app.services.estadual import Estadual
-from app.utils.wrapper import handle_scraping_request
-from app.schemas import BaseCndRequest
+from app.schemas import EstadualRequest
 
 router = APIRouter(prefix="/estadual")
 
 
 @router.post("")
-@handle_scraping_request
-async def estadual(data: BaseCndRequest, tools=Depends(get_tools)):
+async def estadual(data: EstadualRequest, tools=Depends(get_tools)):
     page, context = tools
-    return await Estadual.execute_scrap(page=page, context=context, cnpj=data.cnpj)
-
-
+    pdf_buffer = await Estadual.execute_scrap(
+        page=page, context=context, cnpj=data.cnpj, uf=data.uf
+    )
+    return Response(content=pdf_buffer, media_type="application/pdf")

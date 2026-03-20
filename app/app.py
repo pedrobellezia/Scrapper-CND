@@ -1,8 +1,16 @@
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Browser
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import app.utils.dependencies as deps
-from app.config import HOST, PORT, RELOAD, HEADLESS, PLAYWRIGHT_ARGS, logger, setup_logging
+from app.config import (
+    HOST,
+    PORT,
+    RELOAD,
+    HEADLESS,
+    PLAYWRIGHT_ARGS,
+    logger,
+    setup_logging,
+)
 from app.config import add_routes, add_exceptions_handlers, add_middlewares
 from fastapi.staticfiles import StaticFiles
 
@@ -13,6 +21,7 @@ setup_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global playwright
+
 
     playwright = await async_playwright().start()
     deps.browser = await playwright.chromium.launch(
@@ -32,9 +41,7 @@ add_middlewares(app)
 
 
 if __name__ == "__main__":
-    import uvicornd
+    import uvicorn
 
     logger.info(f"Starting server on {HOST}:{PORT} with reload={RELOAD}")
     uvicorn.run("app.app:app", host=HOST, port=PORT, reload=RELOAD)
-
-

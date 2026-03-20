@@ -10,6 +10,7 @@ import logging
 Path("logs").mkdir(exist_ok=True)
 install_traceback()
 
+
 class RichHandlerWrapper(RichHandler):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -51,6 +52,7 @@ def setup_logging():
 
     logging.config.dictConfig(config)
 
+
 # Configurações de logging - Create logger first with basic config, setup_logging will be called explicitly
 logger = logging.getLogger("app")
 logger.setLevel(logging.DEBUG)
@@ -60,4 +62,3 @@ if not logger.handlers:
     handler = RichHandlerWrapper()
     handler.setLevel(logging.DEBUG)
     logger.addHandler(handler)
-

@@ -29,6 +29,3 @@ async def auth(request: Request, call_next):
 
 
 __all__ = ["auth"]
-
-
-

@@ -1,17 +1,54 @@
-from playwright.async_api import Page, BrowserContext
-from app.exceptions import ScrapError
-from app.config import logger
+from playwright.async_api import Page, BrowserContext, TimeoutError as PlaywrightTimeout
+from app.exceptions import ScrapError, WrongParams
+from app.config import logger, CAPTCHA_API_KEY
+from app.utils.captcha_solver import CaptchaSolver
+from app.services.error_utils import raise_timeout, raise_unexpected
+from pathlib import Path
+import asyncio
 
 
 class Trabalhista:
     @staticmethod
     async def execute_scrap(page: Page, context: BrowserContext, cnpj: str):
-        """Execute scraping for Trabalhista"""
         try:
             logger.info(f"Starting Trabalhista scrape for CNPJ: {cnpj}")
-            # TODO: Implement actual scraping logic
-            return {"status": "success", "data": None}
-        except Exception as e:
-            logger.error(f"Trabalhista scrape error: {e}")
-            raise ScrapError(f"Error scraping Trabalhista for {cnpj}: {str(e)}")
 
+            await page.goto(
+                "https://cndt-certidao.tst.jus.br/inicio.faces",
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+
+            await page.locator("//*[@id='corpo']/div/div[2]/input[1]").click()
+            await page.locator("//*[@id='gerarCertidaoForm:cpfCnpj']").fill(cnpj)
+            await asyncio.sleep(5)
+
+            await CaptchaSolver.solve(
+                api_key=CAPTCHA_API_KEY,
+                page=page,
+                img_xpath="//*[@id='idImgBase64']",
+                input_xpath="//*[@id='idCampoResposta']",
+            )
+
+            async with page.expect_download(timeout=30_000) as download_info:
+                await page.locator(
+                    "//*[@id='gerarCertidaoForm:btnEmitirCertidao']"
+                ).click()
+            download = await download_info.value
+
+            download_path = await download.path()
+            if not download_path:
+                raise ScrapError(
+                    f"Falha ao obter PDF da certidao Trabalhista para {cnpj}"
+                )
+            pdf_buffer = Path(download_path).read_bytes()
+
+            logger.info(f"Trabalhista scrape completed for CNPJ: {cnpj}")
+            return pdf_buffer
+
+        except (ScrapError, WrongParams):
+            raise
+        except PlaywrightTimeout as e:
+            raise_timeout("Trabalhista", cnpj, page, e)
+        except Exception as e:
+            raise_unexpected("Trabalhista", cnpj, page, e)

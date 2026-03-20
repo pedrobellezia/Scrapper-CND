@@ -1,20 +1,30 @@
-from pydantic import BaseModel, field_validator
-import re
+from pydantic import BaseModel, field_validator, ConfigDict
 
 
 class BaseCndRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     cnpj: str
 
-    @field_validator('cnpj')
+
+class EstadualRequest(BaseCndRequest):
+    uf: str
+
+    @field_validator("uf")
     @classmethod
-    def validate_cnpj(cls, v):
-        """Validate CNPJ format - should be 14 digits with optional punctuation"""
-        # Remove common formatting characters
-        clean_cnpj = re.sub(r'[\s\.\/-]', '', v)
+    def validate_uf(cls, v):
+        return v.upper().strip()
 
-        # Check if it's all digits and has 14 characters
-        if not clean_cnpj.isdigit() or len(clean_cnpj) != 14:
-            raise ValueError('CNPJ deve conter 14 dígitos')
 
-        return clean_cnpj
+class MunicipalRequest(BaseCndRequest):
+    uf: str
+    municipio: str
 
+    @field_validator("uf")
+    @classmethod
+    def validate_uf(cls, v):
+        return v.upper().strip()
+
+    @field_validator("municipio")
+    @classmethod
+    def validate_municipio(cls, v):
+        return v.lower().strip().replace(" ", "_")

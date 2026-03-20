@@ -30,7 +30,6 @@ def add_routes(app: FastAPI):
 
 
 def add_middlewares(app: FastAPI):
-    from app.config import auth
+    from app.config.middlewares import auth
 
     app.middleware("http")(auth)
-

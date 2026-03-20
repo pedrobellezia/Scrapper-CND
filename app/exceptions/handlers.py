@@ -5,9 +5,21 @@ from .request_exception import WrongParams, ScrapError
 
 async def validation_error_handler(request, exc):
     logger.warning(f"Validation error: {exc}")
+
+    content_type = request.headers.get("content-type", "")
+
+    if "application/json" not in content_type:
+        return JSONResponse(
+            status_code=415,
+            content={
+                "detail": "Formato de requisição inválido. Envie JSON com 'Content-Type: application/json'.",
+                "example": {"cnpj": "00000000000000"},
+            },
+        )
+
     return JSONResponse(
         status_code=400,
-        content={"detail": "Invalid request data"},
+        content={"detail": "Dados inválidos na requisição."},
     )
 
 
@@ -43,4 +55,3 @@ __all__ = [
     "WrongParams",
     "ScrapError",
 ]
-

@@ -8,6 +8,7 @@ from .config import (
     HEADLESS,
     PLAYWRIGHT_ARGS,
     UFCITY,
+    state,
 )
 from .log import setup_logging, logger
 from .server_configs import add_routes, add_exceptions_handlers, add_middlewares
@@ -29,5 +30,5 @@ __all__ = [
     "add_exceptions_handlers",
     "add_middlewares",
     "auth",
+    "state",
 ]
-

@@ -1,6 +1,30 @@
+import asyncio
 import os
 import pytz
 from dotenv import load_dotenv
+import time
+
+
+class CaptchaState:
+    def __init__(self):
+        self.keyDict = {}
+        self.expireIn = 15 * 60
+        self.lock = asyncio.Lock()
+
+    async def set_item(self, key, value):
+        async with self.lock:
+            self.keyDict[key] = (value, time.time())
+
+    async def get_item(self, key):
+        async with self.lock:
+            obj = self.keyDict.get(key, None)
+            if not obj:
+                return obj
+            value, tempo = obj
+            if time.time() - self.expireIn >= tempo:
+                self.keyDict.pop(key)
+            return value
+
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -44,7 +68,8 @@ __all__ = [
     "RELOAD",
     "HEADLESS",
     "PLAYWRIGHT_ARGS",
-    "UFCITY"
+    "UFCITY",
+    "state"
 ]
 
-
+state = CaptchaState()
